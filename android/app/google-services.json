@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1038079181521",
+    "project_id": "goalfocus-a777b",
+    "storage_bucket": "goalfocus-a777b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1038079181521:android:94aa9eda9218487689bbf0",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1038079181521-al4v10o85f2c8ppj3iieu1gpdafc0sdq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.flutter_application_1",
+            "certificate_hash": "7f329989dca23c9c23d7e27954ec378e8b60dfc1"
+          }
+        },
+        {
+          "client_id": "1038079181521-s0vc0nlf5kd1018igvihidd6t8sd640e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDpVX0VQuuNKgBwPMNPo3fukQsvVvpDaQU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1038079181521-s0vc0nlf5kd1018igvihidd6t8sd640e.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
