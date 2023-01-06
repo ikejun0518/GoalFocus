@@ -1,5 +1,6 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/View/calendar.dart';
+import 'package:flutter_application_1/View/account/create_account_page_en.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,6 +12,7 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    Firebase.initializeApp();
     return MaterialApp(
       title: 'Goal Focus',
       theme: ThemeData(
@@ -25,7 +27,7 @@ class MyApp extends StatelessWidget {
         // is not restarted
         primarySwatch: Colors.blue,
       ),
-      home: const Calendar(),
+      home: const CreateAccountPageEn(),
     );
   }
 }
