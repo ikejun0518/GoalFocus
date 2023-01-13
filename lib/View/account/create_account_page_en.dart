@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/View/account/login_page.dart';
+import 'package:flutter_application_1/View/account/login_page_en.dart';
 import 'package:flutter_application_1/View/calendar.dart';
 import 'package:flutter_application_1/model/account.dart';
 import 'package:flutter_application_1/utils/authentication.dart';
@@ -214,7 +214,7 @@ class _CreateAccountPageState extends State<CreateAccountPageEn> {
                                         context,
                                         MaterialPageRoute(
                                             builder: (context) =>
-                                                const LoginPage()));
+                                                const LoginPageEn()));
                                   }),
                             const TextSpan(text: ' if you have an account'),
                           ])),

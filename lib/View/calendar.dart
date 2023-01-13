@@ -19,7 +19,7 @@ class _CalendarState extends State<Calendar> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(),
-        drawer: WidgetUtils.createDrawer(context),
+        drawer: WidgetUtils.createDrawerEn(context),
         body: Column(
           children: [
             TableCalendar(

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../View/make_goal.dart';
@@ -17,7 +16,7 @@ class WidgetUtils {
     );
   }
 
-  static Drawer createDrawer(context) {
+  static Drawer createDrawerEn(context) {
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -27,9 +26,10 @@ class WidgetUtils {
             child: Text('アカウント名等'),
           ),
           ListTile(
-            title: const Text('目標を設定する'),
+            title: const Text('Set a Goal'),
             onTap: () {
-              Navigator.push(context,MaterialPageRoute(builder: (context) => const MakeGoal()));
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const MakeGoal()));
             },
           ),
         ],
