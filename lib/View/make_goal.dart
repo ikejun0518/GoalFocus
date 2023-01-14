@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_application_1/model/goal.dart';
+import 'package:flutter_application_1/utils/authentication.dart';
+import 'package:flutter_application_1/utils/firestore/goal_firestore.dart';
 import 'package:flutter_application_1/utils/widget_utils.dart';
 
-import 'calendar.dart';
+import 'calendar_en.dart';
 
 class MakeGoal extends StatefulWidget {
   const MakeGoal({super.key});
@@ -16,8 +20,10 @@ class _MakeGoalState extends State<MakeGoal> {
   TextEditingController unitController = TextEditingController();
   TextEditingController periodController = TextEditingController();
 
-  String? selection = 'num';
+  String? method = 'num';
   String? period = 'short';
+
+  bool check = false;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +47,7 @@ class _MakeGoalState extends State<MakeGoal> {
                     child: TextFormField(
                       textAlign: TextAlign.center,
                       decoration: InputDecoration(
-                          hintText: selection == 'num'
+                          hintText: method == 'num'
                               ? 'example: Lose weight.'
                               : 'example: Develop an application.'),
                       controller: goalController,
@@ -84,10 +90,10 @@ class _MakeGoalState extends State<MakeGoal> {
                         ],
                         onChanged: (String? value) {
                           setState(() {
-                            selection = value;
+                            method = value;
                           });
                         },
-                        value: selection,
+                        value: method,
                       ),
                     ),
                   ),
@@ -127,11 +133,13 @@ class _MakeGoalState extends State<MakeGoal> {
                       right: 10,
                     ),
                     child: TextFormField(
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       textAlign: TextAlign.center,
                       controller: numController,
-                      enabled: selection == 'num' ? true : false,
+                      enabled: method == 'num' ? true : false,
                       decoration: InputDecoration(
-                          hintText: selection == 'num' ? '20' : ''),
+                          hintText: method == 'num' ? '20' : ''),
                     ),
                   ),
                 ),
@@ -162,9 +170,9 @@ class _MakeGoalState extends State<MakeGoal> {
                       child: TextFormField(
                         textAlign: TextAlign.center,
                         decoration: InputDecoration(
-                            hintText: selection == 'num' ? 'lb' : ''),
+                            hintText: method == 'num' ? 'lb' : ''),
                         controller: unitController,
-                        enabled: selection == 'num' ? true : false,
+                        enabled: method == 'num' ? true : false,
                       ),
                     ),
                   ),
@@ -256,6 +264,8 @@ class _MakeGoalState extends State<MakeGoal> {
                   child: Padding(
                     padding: const EdgeInsets.only(right: 10),
                     child: TextFormField(
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       textAlign: TextAlign.center,
                       decoration: InputDecoration(
                         hintText: period == 'short'
@@ -310,17 +320,72 @@ class _MakeGoalState extends State<MakeGoal> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              onPressed: () {
-                // ignore: use_build_context_synchronously
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: ((context) => const Calendar())));
+              onPressed: () async {
+                if (goalController.text.isNotEmpty &&
+                    periodController.text.isNotEmpty) {
+                  if (method == 'num') {
+                    if (numController.text.isNotEmpty &&
+                        unitController.text.isNotEmpty) {
+                      setState(() {
+                        check = false;
+                      });
+                      Goal newGoal = Goal(
+                          accountId: Authentication.myAccount!.id,
+                          goal: goalController.text,
+                          method: method!,
+                          targetnum: int.parse(numController.text),
+                          unit: unitController.text,
+                          period: period!,
+                          periodDetails: int.parse(periodController.text));
+                      var result = await GoalFirestore.addGoal(newGoal);
+
+                      if (result == true) {
+                        // ignore: use_build_context_synchronously
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const CalendarEn()));
+                      }
+                    } else {
+                      setState(() {
+                        check = true;
+                      });
+                    }
+                  } else {
+                    setState(() {
+                      check = false;
+                    });
+                    Goal newGoal = Goal(
+                        accountId: Authentication.myAccount!.id,
+                        goal: goalController.text,
+                        method: method!,
+                        period: period!,
+                        periodDetails: int.parse(periodController.text));
+                    var result = await GoalFirestore.addGoal(newGoal);
+
+                    if (result == true) {
+                      // ignore: use_build_context_synchronously
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const CalendarEn()));
+                    }
+                  }
+                } else {
+                  setState(() {
+                    check = true;
+                  });
+                }
               },
             ),
-            const SizedBox(
-              height: 100,
-            ),
+            SizedBox(
+                height: 100,
+                child: check == true
+                    ? const Text(
+                        'Some parts are not entered.',
+                        style: TextStyle(color: Colors.red, fontSize: 16),
+                      )
+                    : const Text('')),
           ],
         ),
       ),

@@ -5,7 +5,7 @@ import 'package:flutter_application_1/View/account/create_account_page_en.dart';
 import 'package:flutter_application_1/utils/firestore/user_firestore.dart';
 
 import '../../utils/authentication.dart';
-import '../calendar.dart';
+import '../calendar_en.dart';
 
 class LoginPageEn extends StatefulWidget {
   const LoginPageEn({super.key});
@@ -149,7 +149,7 @@ class _LoginPageEnState extends State<LoginPageEn> {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: ((context) => const Calendar())));
+                            builder: ((context) => const CalendarEn())));
                   }
                 }
               }

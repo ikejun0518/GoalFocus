@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/View/account/login_page_en.dart';
-import 'package:flutter_application_1/View/calendar.dart';
+import 'package:flutter_application_1/View/calendar_en.dart';
 import 'package:flutter_application_1/model/account.dart';
 import 'package:flutter_application_1/utils/authentication.dart';
 import 'package:flutter_application_1/utils/firestore/user_firestore.dart';
@@ -255,7 +255,7 @@ class _CreateAccountPageState extends State<CreateAccountPageEn> {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: ((context) => const Calendar())));
+                              builder: ((context) => const CalendarEn())));
                     }
                   }
                 }

@@ -1,12 +1,23 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Goal {
-  String content;
-  String span;
-  DateTime? finishDay;
+  String accountId;
+  String goal;
+  String method;
+  int targetnum;
+  String unit;
+  String period;
+  int periodDetails;
+  Timestamp? createdTime;
 
   Goal({
-    this.content = '',
-    this.span = '',
-    this.finishDay,
+    this.accountId = '',
+    this.goal = '',
+    this.method = '',
+    this.targetnum = 0,
+    this.unit = '',
+    this.period = '',
+    this.periodDetails = 0,
+    this.createdTime
   });
 }
