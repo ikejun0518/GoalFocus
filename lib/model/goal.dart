@@ -7,17 +7,22 @@ class Goal {
   int targetnum;
   String unit;
   String period;
-  int periodDetails;
-  Timestamp? createdTime;
+  String? longGoalId;
+  String? middleGoalId;
+  String? shortGoalId;
+  Timestamp periodDetails;
+  Timestamp createdTime;
 
-  Goal({
-    this.accountId = '',
-    this.goal = '',
-    this.method = '',
-    this.targetnum = 0,
-    this.unit = '',
-    this.period = '',
-    this.periodDetails = 0,
-    this.createdTime
-  });
+  Goal(
+      {this.accountId = '',
+      this.goal = '',
+      this.method = '',
+      this.targetnum = 0,
+      this.unit = '',
+      this.period = '',
+      this.longGoalId = '',
+      this.middleGoalId = '',
+      this.shortGoalId = '',
+      required this.periodDetails,
+      required this.createdTime});
 }

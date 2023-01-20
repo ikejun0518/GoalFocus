@@ -1,9 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_application_1/model/goal.dart';
 import 'package:flutter_application_1/utils/authentication.dart';
 import 'package:flutter_application_1/utils/firestore/goal_firestore.dart';
 import 'package:flutter_application_1/utils/widget_utils.dart';
+import 'package:intl/intl.dart';
+import 'dart:async';
 
 import 'calendar_en.dart';
 
@@ -15,23 +19,104 @@ class MakeGoal extends StatefulWidget {
 }
 
 class _MakeGoalState extends State<MakeGoal> {
-  TextEditingController goalController = TextEditingController();
-  TextEditingController numController = TextEditingController();
-  TextEditingController unitController = TextEditingController();
-  TextEditingController periodController = TextEditingController();
+  TextEditingController longGoalController = TextEditingController();
+  TextEditingController longNumController = TextEditingController();
+  TextEditingController longUnitController = TextEditingController();
+  TextEditingController middleGoalController = TextEditingController();
+  TextEditingController middleNumController = TextEditingController();
+  TextEditingController middleUnitController = TextEditingController();
+  TextEditingController shortGoalController = TextEditingController();
+  TextEditingController shortNumController = TextEditingController();
+  TextEditingController shortUnitController = TextEditingController();
 
-  String? method = 'num';
-  String? period = 'short';
+  String? longmethod = 'num';
+  String? middlemethod = 'num';
+  String? shortmethod = 'num';
 
   bool check = false;
 
+  dynamic dateTime;
+  dynamic longDateTime;
+  dynamic middleDateTime;
+  dynamic shortDateTime;
+  dynamic longdateFormat;
+  dynamic middledateFormat;
+  dynamic shortdateFormat;
+
+  String? myUid;
+
+  @override
+  void initState() {
+    super.initState();
+    dateTime = DateTime.now();
+    longdateFormat = DateFormat('yMMMd').format(dateTime);
+    middledateFormat = DateFormat('yMMMd').format(dateTime);
+    shortdateFormat = DateFormat('yMMMd').format(dateTime);
+
+    if (Authentication.myAccount != null) {
+      myUid = Authentication.myAccount!.id;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (Authentication.myAccount != null) {
+      myUid = Authentication.myAccount!.id;
+    }
+    //長期目標日付設定
+    Future<void> longDate(BuildContext context) async {
+      final DateTime? selected = await showDatePicker(
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime(2023),
+          lastDate: DateTime(2099));
+
+      if (selected != null) {
+        setState(() {
+          longdateFormat = (DateFormat.yMMMd()).format(selected);
+          longDateTime = selected;
+        });
+      }
+    }
+
+    //中期目標日付設定
+    Future<void> middleDate(BuildContext context) async {
+      final DateTime? selected = await showDatePicker(
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime(2023),
+          lastDate: DateTime(2099));
+
+      if (selected != null) {
+        setState(() {
+          middledateFormat = (DateFormat.yMMMd()).format(selected);
+          middleDateTime = selected;
+        });
+      }
+    }
+
+    //短期目標日付設定
+    Future<void> shortDate(BuildContext context) async {
+      final DateTime? selected = await showDatePicker(
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime(2023),
+          lastDate: DateTime(2099));
+
+      if (selected != null) {
+        setState(() {
+          shortdateFormat = (DateFormat.yMMMd()).format(selected);
+          shortDateTime = selected;
+        });
+      }
+    }
+
     return Scaffold(
       appBar: WidgetUtils.createAppBar('Set a Goal'),
       body: SingleChildScrollView(
         child: Column(
           children: [
+            const Text('set a long term goal'),
             SizedBox(
               child: Row(children: [
                 const Padding(
@@ -47,10 +132,10 @@ class _MakeGoalState extends State<MakeGoal> {
                     child: TextFormField(
                       textAlign: TextAlign.center,
                       decoration: InputDecoration(
-                          hintText: method == 'num'
+                          hintText: longmethod == 'num'
                               ? 'example: Lose weight.'
                               : 'example: Develop an application.'),
-                      controller: goalController,
+                      controller: longGoalController,
                     ),
                   ),
                 )
@@ -90,10 +175,10 @@ class _MakeGoalState extends State<MakeGoal> {
                         ],
                         onChanged: (String? value) {
                           setState(() {
-                            method = value;
+                            longmethod = value;
                           });
                         },
-                        value: method,
+                        value: longmethod,
                       ),
                     ),
                   ),
@@ -136,10 +221,10 @@ class _MakeGoalState extends State<MakeGoal> {
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       textAlign: TextAlign.center,
-                      controller: numController,
-                      enabled: method == 'num' ? true : false,
+                      controller: longNumController,
+                      enabled: longmethod == 'num' ? true : false,
                       decoration: InputDecoration(
-                          hintText: method == 'num' ? '20' : ''),
+                          hintText: longmethod == 'num' ? '20' : ''),
                     ),
                   ),
                 ),
@@ -170,9 +255,9 @@ class _MakeGoalState extends State<MakeGoal> {
                       child: TextFormField(
                         textAlign: TextAlign.center,
                         decoration: InputDecoration(
-                            hintText: method == 'num' ? 'lb' : ''),
-                        controller: unitController,
-                        enabled: method == 'num' ? true : false,
+                            hintText: longmethod == 'num' ? 'lb' : ''),
+                        controller: longUnitController,
+                        enabled: longmethod == 'num' ? true : false,
                       ),
                     ),
                   ),
@@ -190,72 +275,13 @@ class _MakeGoalState extends State<MakeGoal> {
               height: 50,
             ),
             SizedBox(
-                child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(left: 10),
-                  child: Text(
-                    'Select period',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const SizedBox(
-                  width: 20,
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: SizedBox(
-                      height: 50,
-                      width: 130,
-                      child: DropdownButtonFormField(
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.grey.withOpacity(0.3),
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                              value: 'short', child: Text('Short')),
-                          DropdownMenuItem(
-                              value: 'middle', child: Text('Middle')),
-                          DropdownMenuItem(value: 'long', child: Text('Long')),
-                        ],
-                        onChanged: (String? value) {
-                          setState(() {
-                            period = value;
-                          });
-                        },
-                        value: period,
-                      )),
-                ),
-              ],
-            )),
-            const SizedBox(
-              height: 20,
-            ),
-            const Text(
-              'If the target period is within 1 week, select the short,',
-              style: TextStyle(color: Colors.grey),
-            ),
-            const Text(
-              'if it is within half a year, select the middle,',
-              style: TextStyle(color: Colors.grey),
-            ),
-            const Text(
-              'and if it is longer, select the Long',
-              style: TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            SizedBox(
               child: Row(children: [
                 const Padding(
                   padding: EdgeInsets.only(left: 10),
                   child: SizedBox(
                       width: 200,
                       child: Text(
-                        'Period details',
+                        'Deadline',
                         style: TextStyle(
                             fontSize: 20, fontWeight: FontWeight.bold),
                       )),
@@ -263,48 +289,429 @@ class _MakeGoalState extends State<MakeGoal> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(right: 10),
-                    child: TextFormField(
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      textAlign: TextAlign.center,
-                      decoration: InputDecoration(
-                        hintText: period == 'short'
-                            ? '7'
-                            : period == 'middle'
-                                ? '180'
-                                : '1000',
-                      ),
-                      controller: periodController,
+                    child: Row(
+                      children: [
+                        Text(
+                          '$longdateFormat',
+                          style: const TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.date_range),
+                          onPressed: () => longDate(context),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ]),
             ),
             const SizedBox(
-              height: 20,
+              height: 100,
             ),
-            const Text(
-              'You can specify whitin 7days if you select short,',
-              style: TextStyle(color: Colors.grey),
-            ),
-            const Text(
-              'within 180 days if you select middle,',
-              style: TextStyle(color: Colors.grey),
-            ),
-            const Text(
-              'and within 1000 days if you select long.',
-              style: TextStyle(color: Colors.grey),
+            ExpandablePanel(
+              header: const SizedBox(child: Text('Set a middle term goal.')),
+              collapsed: const Text('Can be set later.'),
+              expanded: Column(children: [
+                SizedBox(
+                  child: Row(children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: Text(
+                        'Goal',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: TextFormField(
+                          textAlign: TextAlign.center,
+                          decoration: InputDecoration(
+                              hintText: middlemethod == 'num'
+                                  ? 'example: Lose Weight.'
+                                  : 'example: Develop an application.'),
+                          controller: middleGoalController,
+                        ),
+                      ),
+                    )
+                  ]),
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                SizedBox(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(left: 10),
+                        child: SizedBox(
+                          width: 200,
+                          child: Text(
+                            'Management method',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 20),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 10),
+                        child: SizedBox(
+                          height: 50,
+                          width: 130,
+                          child: DropdownButtonFormField(
+                            decoration: InputDecoration(
+                                filled: true,
+                                fillColor: Colors.grey.withOpacity(0.3)),
+                            items: const [
+                              DropdownMenuItem(
+                                  value: 'num', child: Text('numerical')),
+                              DropdownMenuItem(
+                                  value: 'percent', child: Text('%')),
+                            ],
+                            onChanged: (String? value) {
+                              setState(() {
+                                middlemethod = value;
+                              });
+                            },
+                            value: middlemethod,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                const Text(
+                  'Set goals that can be managed numerically.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const Text(
+                  'Otherwise, evaluate the progress in %.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(
+                  height: 50,
+                ),
+                SizedBox(
+                  child: Row(children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: SizedBox(
+                        width: 200,
+                        child: Text(
+                          'Target numerical',
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                          right: 10,
+                        ),
+                        child: TextFormField(
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly
+                          ],
+                          textAlign: TextAlign.center,
+                          controller: middleNumController,
+                          enabled: middlemethod == 'num' ? true : false,
+                          decoration: InputDecoration(
+                              hintText: middlemethod == 'num' ? '10' : ''),
+                        ),
+                      ),
+                    ),
+                  ]),
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                SizedBox(
+                  child: Row(
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(left: 10),
+                        child: SizedBox(
+                          width: 200,
+                          child: Text(
+                            'Unit',
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            right: 10,
+                          ),
+                          child: TextFormField(
+                            textAlign: TextAlign.center,
+                            decoration: InputDecoration(
+                                hintText: middlemethod == 'num' ? 'lb' : ''),
+                            controller: middleUnitController,
+                            enabled: middlemethod == 'num' ? true : false,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                const Text(
+                  'If you select %, no input is required.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(
+                  height: 50,
+                ),
+                SizedBox(
+                  child: Row(children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: SizedBox(
+                          width: 200,
+                          child: Text(
+                            'Deadline',
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold),
+                          )),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 10),
+                        child: Row(
+                          children: [
+                            Text(
+                              '$middledateFormat',
+                              style: const TextStyle(
+                                  fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.date_range),
+                              onPressed: () => middleDate(context),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ]),
+                ),
+              ]),
             ),
             const SizedBox(
-              height: 20,
+              height: 50,
             ),
-            const Text(
-              'If you enter a value greater than the range,',
-              style: TextStyle(color: Colors.grey),
+            ExpandablePanel(
+              header: const SizedBox(child: Text('Set a short term goal.')),
+              collapsed: const Text('Can be set later.'),
+              expanded: Column(children: [
+                SizedBox(
+                  child: Row(children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: Text(
+                        'Goal',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: TextFormField(
+                          textAlign: TextAlign.center,
+                          decoration: InputDecoration(
+                              hintText: shortmethod == 'num'
+                                  ? 'example: Lose Weight.'
+                                  : 'example: Develop an application.'),
+                          controller: shortGoalController,
+                        ),
+                      ),
+                    )
+                  ]),
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                SizedBox(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(left: 10),
+                        child: SizedBox(
+                          width: 200,
+                          child: Text(
+                            'Management method',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 20),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 10),
+                        child: SizedBox(
+                          height: 50,
+                          width: 130,
+                          child: DropdownButtonFormField(
+                            decoration: InputDecoration(
+                                filled: true,
+                                fillColor: Colors.grey.withOpacity(0.3)),
+                            items: const [
+                              DropdownMenuItem(
+                                  value: 'num', child: Text('numerical')),
+                              DropdownMenuItem(
+                                  value: 'percent', child: Text('%')),
+                            ],
+                            onChanged: (String? value) {
+                              setState(() {
+                                shortmethod = value;
+                              });
+                            },
+                            value: shortmethod,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                const Text(
+                  'Set goals that can be managed numerically.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const Text(
+                  'Otherwise, evaluate the progress in %.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(
+                  height: 50,
+                ),
+                SizedBox(
+                  child: Row(children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: SizedBox(
+                        width: 200,
+                        child: Text(
+                          'Target numerical',
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                          right: 10,
+                        ),
+                        child: TextFormField(
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly
+                          ],
+                          textAlign: TextAlign.center,
+                          controller: shortNumController,
+                          enabled: shortmethod == 'num' ? true : false,
+                          decoration: InputDecoration(
+                              hintText: shortmethod == 'num' ? '10' : ''),
+                        ),
+                      ),
+                    ),
+                  ]),
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                SizedBox(
+                  child: Row(
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(left: 10),
+                        child: SizedBox(
+                          width: 200,
+                          child: Text(
+                            'Unit',
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            right: 10,
+                          ),
+                          child: TextFormField(
+                            textAlign: TextAlign.center,
+                            decoration: InputDecoration(
+                                hintText: shortmethod == 'num' ? 'lb' : ''),
+                            controller: shortUnitController,
+                            enabled: shortmethod == 'num' ? true : false,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                const Text(
+                  'If you select %, no input is required.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(
+                  height: 50,
+                ),
+                SizedBox(
+                  child: Row(children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: SizedBox(
+                          width: 200,
+                          child: Text(
+                            'Deadline',
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold),
+                          )),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 10),
+                        child: Row(
+                          children: [
+                            Text(
+                              '$shortdateFormat',
+                              style: const TextStyle(
+                                  fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.date_range),
+                              onPressed: () => shortDate(context),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ]),
+                ),
+              ]),
             ),
-            const Text(
-              'it will be the maximum value of the range.',
-              style: TextStyle(color: Colors.grey),
+            const SizedBox(
+              height: 100,
             ),
             const SizedBox(
               height: 50,
@@ -321,30 +728,89 @@ class _MakeGoalState extends State<MakeGoal> {
                 ),
               ),
               onPressed: () async {
-                if (goalController.text.isNotEmpty &&
-                    periodController.text.isNotEmpty) {
-                  if (method == 'num') {
-                    if (numController.text.isNotEmpty &&
-                        unitController.text.isNotEmpty) {
+                //longGoalは絶対入力
+                if (longGoalController.text.isNotEmpty) {
+                  if (longmethod == 'num') {
+                    if (longNumController.text.isNotEmpty &&
+                        longUnitController.text.isNotEmpty) {
                       setState(() {
                         check = false;
                       });
-                      Goal newGoal = Goal(
-                          accountId: Authentication.myAccount!.id,
-                          goal: goalController.text,
-                          method: method!,
-                          targetnum: int.parse(numController.text),
-                          unit: unitController.text,
-                          period: period!,
-                          periodDetails: int.parse(periodController.text));
-                      var result = await GoalFirestore.addGoal(newGoal);
+                      if (myUid != null) {
+                        Goal newLongGoal = Goal(
+                            accountId: myUid!,
+                            goal: longGoalController.text,
+                            method: longmethod!,
+                            targetnum: int.parse(longNumController.text),
+                            unit: longUnitController.text,
+                            periodDetails: Timestamp.fromDate(longDateTime),
+                            createdTime: Timestamp.now());
+                        var result1 =
+                            await GoalFirestore.addLongGoal(newLongGoal);
 
-                      if (result == true) {
-                        // ignore: use_build_context_synchronously
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const CalendarEn()));
+                        if (result1 is String) {
+                          if (middleGoalController.text.isNotEmpty) {
+                            Goal newMiddleGoal = Goal(
+                                accountId: myUid!,
+                                goal: middleGoalController.text,
+                                method: middlemethod!,
+                                targetnum: int.parse(middleNumController.text),
+                                unit: middleUnitController.text,
+                                periodDetails:
+                                    Timestamp.fromDate(middleDateTime),
+                                createdTime: Timestamp.now());
+                            var result2 = await GoalFirestore.addMiddleGoal(
+                                newMiddleGoal, result1);
+
+                            if (result2 is String) {
+                              if (shortGoalController.text.isNotEmpty) {
+                                Goal newShortGoal = Goal(
+                                    accountId: myUid!,
+                                    goal: shortGoalController.text,
+                                    method: shortmethod!,
+                                    targetnum:
+                                        int.parse(shortNumController.text),
+                                    unit: shortUnitController.text,
+                                    periodDetails:
+                                        Timestamp.fromDate(shortDateTime),
+                                    createdTime: Timestamp.now());
+                                var result3 = await GoalFirestore.addShortGoal(
+                                    newShortGoal, result1, result2);
+                                if (result3 is String) {
+                                  // ignore: use_build_context_synchronously
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              const CalendarEn()));
+                                }
+                              } else {
+                                // ignore: use_build_context_synchronously
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const CalendarEn()));
+                              }
+                            } else {
+                              // ignore: use_build_context_synchronously
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const CalendarEn()));
+                            }
+                          } else {
+                            // ignore: use_build_context_synchronously
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const CalendarEn()));
+                          }
+                        }
+                      } else {
+                        // ignore: avoid_print
+                        print('myUid取得不可');
                       }
                     } else {
                       setState(() {
@@ -355,15 +821,15 @@ class _MakeGoalState extends State<MakeGoal> {
                     setState(() {
                       check = false;
                     });
-                    Goal newGoal = Goal(
+                    Goal newLongGoal = Goal(
                         accountId: Authentication.myAccount!.id,
-                        goal: goalController.text,
-                        method: method!,
-                        period: period!,
-                        periodDetails: int.parse(periodController.text));
-                    var result = await GoalFirestore.addGoal(newGoal);
+                        goal: longGoalController.text,
+                        method: longmethod!,
+                        periodDetails: Timestamp.fromDate(longDateTime),
+                        createdTime: Timestamp.now());
+                    var result = await GoalFirestore.addLongGoal(newLongGoal);
 
-                    if (result == true) {
+                    if (result is String) {
                       // ignore: use_build_context_synchronously
                       Navigator.push(
                           context,
