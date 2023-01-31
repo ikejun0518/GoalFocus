@@ -1,3 +1,6 @@
+// ignore_for_file: unnecessary_null_comparison
+
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_application_1/model/goal.dart';
 
@@ -24,7 +27,6 @@ class GoalFirestore {
         'created_time': Timestamp.now()
       });
 
-      
       await userGoals.doc(result.id).set({
         'long_goal_id': result.id,
         'account_id': newLongGoal.accountId,
@@ -47,7 +49,8 @@ class GoalFirestore {
     }
   }
 
-  static Future<String?> addMiddleGoal(Goal newMiddleGoal, String longGoalid) async {
+  static Future<String?> addMiddleGoal(
+      Goal newMiddleGoal, String longGoalid) async {
     try {
       final CollectionReference userGoals = _firestoreInstance
           .collection('users')
@@ -182,5 +185,22 @@ class GoalFirestore {
       print('自分の目標取得エラー: $e');
       return null;
     }
+  }
+
+  static Future<List> getDocId(String myUid) async {
+    List docList = [];
+    await _firestoreInstance
+        .collection('users')
+        .doc(myUid)
+        .collection('my_active_goals')
+        .get()
+        // ignore: avoid_function_literals_in_foreach_calls
+        .then((QuerySnapshot snapshot) => snapshot.docs.forEach((doc) {
+              docList.add(doc.id);
+            }));
+
+    print(docList);
+
+    return docList;
   }
 }
