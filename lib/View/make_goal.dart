@@ -745,51 +745,39 @@ class _MakeGoalState extends State<MakeGoal> {
                             unit: longUnitController.text,
                             periodDetails: Timestamp.fromDate(longDateTime),
                             createdTime: Timestamp.now());
-                        List checkGoal = await GoalFirestore.getDocId(myUid!);
-                        // ignore: unrelated_type_equality_checks
-                        if (checkGoal.isEmpty) {
-                          var result1 =
-                              await GoalFirestore.addLongGoal(newLongGoal);
 
-                          if (result1 is String) {
-                            if (middleGoalController.text.isNotEmpty) {
-                              Goal newMiddleGoal = Goal(
-                                  accountId: myUid!,
-                                  goal: middleGoalController.text,
-                                  method: middlemethod!,
-                                  targetnum:
-                                      int.parse(middleNumController.text),
-                                  unit: middleUnitController.text,
-                                  periodDetails:
-                                      Timestamp.fromDate(middleDateTime),
-                                  createdTime: Timestamp.now());
-                              var result2 = await GoalFirestore.addMiddleGoal(
-                                  newMiddleGoal, result1);
+                        var result1 =
+                            await GoalFirestore.addLongGoal(newLongGoal);
 
-                              if (result2 is String) {
-                                if (shortGoalController.text.isNotEmpty) {
-                                  Goal newShortGoal = Goal(
-                                      accountId: myUid!,
-                                      goal: shortGoalController.text,
-                                      method: shortmethod!,
-                                      targetnum:
-                                          int.parse(shortNumController.text),
-                                      unit: shortUnitController.text,
-                                      periodDetails:
-                                          Timestamp.fromDate(shortDateTime),
-                                      createdTime: Timestamp.now());
-                                  var result3 =
-                                      await GoalFirestore.addShortGoal(
-                                          newShortGoal, result1, result2);
-                                  if (result3 is String) {
-                                    // ignore: use_build_context_synchronously
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                const CalendarEn()));
-                                  }
-                                } else {
+                        if (result1 is String) {
+                          if (middleGoalController.text.isNotEmpty) {
+                            Goal newMiddleGoal = Goal(
+                                accountId: myUid!,
+                                goal: middleGoalController.text,
+                                method: middlemethod!,
+                                targetnum: int.parse(middleNumController.text),
+                                unit: middleUnitController.text,
+                                periodDetails:
+                                    Timestamp.fromDate(middleDateTime),
+                                createdTime: Timestamp.now());
+                            var result2 = await GoalFirestore.addMiddleGoal(
+                                newMiddleGoal, result1);
+
+                            if (result2 is String) {
+                              if (shortGoalController.text.isNotEmpty) {
+                                Goal newShortGoal = Goal(
+                                    accountId: myUid!,
+                                    goal: shortGoalController.text,
+                                    method: shortmethod!,
+                                    targetnum:
+                                        int.parse(shortNumController.text),
+                                    unit: shortUnitController.text,
+                                    periodDetails:
+                                        Timestamp.fromDate(shortDateTime),
+                                    createdTime: Timestamp.now());
+                                var result3 = await GoalFirestore.addShortGoal(
+                                    newShortGoal, result1, result2);
+                                if (result3 is String) {
                                   // ignore: use_build_context_synchronously
                                   Navigator.push(
                                       context,
@@ -813,13 +801,13 @@ class _MakeGoalState extends State<MakeGoal> {
                                       builder: (context) =>
                                           const CalendarEn()));
                             }
+                          } else {
+                            // ignore: use_build_context_synchronously
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const CalendarEn()));
                           }
-                        } else {
-                          // ignore: use_build_context_synchronously
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const CalendarEn()));
                         }
                       } else {
                         // ignore: avoid_print
@@ -840,20 +828,64 @@ class _MakeGoalState extends State<MakeGoal> {
                         method: longmethod!,
                         periodDetails: Timestamp.fromDate(longDateTime),
                         createdTime: Timestamp.now());
-                    var result = await GoalFirestore.addLongGoal(newLongGoal);
+                    var result1 = await GoalFirestore.addLongGoal(newLongGoal);
 
-                    if (result is String) {
-                      // ignore: use_build_context_synchronously
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const CalendarEn()));
+                    if (result1 is String) {
+                      if (middleGoalController.text.isNotEmpty) {
+                        Goal newMiddleGoal = Goal(
+                            accountId: myUid!,
+                            goal: middleGoalController.text,
+                            method: middlemethod!,
+                            periodDetails: Timestamp.fromDate(middleDateTime),
+                            createdTime: Timestamp.now());
+                        var result2 = await GoalFirestore.addMiddleGoal(
+                            newMiddleGoal, result1);
+
+                        if (result2 is String) {
+                          if (shortGoalController.text.isNotEmpty) {
+                            Goal newShortGoal = Goal(
+                                accountId: myUid!,
+                                goal: shortGoalController.text,
+                                method: shortmethod!,
+                                periodDetails:
+                                    Timestamp.fromDate(shortDateTime),
+                                createdTime: Timestamp.now());
+                            var result3 = await GoalFirestore.addShortGoal(
+                                newShortGoal, result1, result2);
+                            if (result3 is String) {
+                              // ignore: use_build_context_synchronously
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const CalendarEn()));
+                            }
+                          }
+                        } else {
+                          // ignore: use_build_context_synchronously
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const CalendarEn()));
+                        }
+                        // ignore: use_build_context_synchronously
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const CalendarEn()));
+                      } else {
+                        // ignore: use_build_context_synchronously
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const CalendarEn()));
+                      }
+                    } else {
+                      setState(() {
+                        check = true;
+                      });
                     }
                   }
-                } else {
-                  setState(() {
-                    check = true;
-                  });
                 }
               },
             ),

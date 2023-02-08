@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/utils/dialog.dart';
 
 import '../View/make_goal.dart';
 
@@ -16,7 +17,8 @@ class WidgetUtils {
     );
   }
 
-  static Drawer createDrawerEn(context) {
+  static Drawer createDrawerEn(
+      context, String? longGoalId, String? middleGoalId, String? shortGoalId) {
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -28,8 +30,20 @@ class WidgetUtils {
           ListTile(
             title: const Text('Set a Goal'),
             onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const MakeGoal()));
+              if (longGoalId == null) {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => const MakeGoal()));
+              } else {
+                showDialog<void>(
+                    context: context,
+                    builder: (_) {
+                      return CreateAlertDialog(
+                        longGoalId: longGoalId,
+                        middleGoalId: middleGoalId,
+                        shortGoalId: shortGoalId,
+                      );
+                    });
+              }
             },
           ),
         ],

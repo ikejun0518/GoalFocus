@@ -80,7 +80,8 @@ class _CalendarState extends State<CalendarEn> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(),
-        drawer: WidgetUtils.createDrawerEn(context),
+        drawer: WidgetUtils.createDrawerEn(
+            context, longGoalId, middleGoalId, shortGoalId),
         body: SingleChildScrollView(
           child: Column(children: [
             TableCalendar(

@@ -187,20 +187,5 @@ class GoalFirestore {
     }
   }
 
-  static Future<List> getDocId(String myUid) async {
-    List docList = [];
-    await _firestoreInstance
-        .collection('users')
-        .doc(myUid)
-        .collection('my_active_goals')
-        .get()
-        // ignore: avoid_function_literals_in_foreach_calls
-        .then((QuerySnapshot snapshot) => snapshot.docs.forEach((doc) {
-              docList.add(doc.id);
-            }));
-
-    print(docList);
-
-    return docList;
-  }
 }
+  
