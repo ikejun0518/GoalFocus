@@ -1,8 +1,8 @@
 // ignore_for_file: unnecessary_null_comparison
 
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_application_1/model/goal.dart';
+import 'package:flutter_application_1/utils/firestore/user_firestore.dart';
 
 class GoalFirestore {
   static final _firestoreInstance = FirebaseFirestore.instance;
@@ -187,5 +187,179 @@ class GoalFirestore {
     }
   }
 
+  static Future<dynamic> moveGoalArchive(
+      String longGoalId, String myUid) async {
+    try {
+      final CollectionReference myActiveGoal =
+          UserFirestore.users.doc(myUid).collection('my_active_goals');
+
+      DocumentSnapshot longSnapshot = await myActiveGoal.doc(longGoalId).get();
+
+      Map<String, dynamic> longData =
+          longSnapshot.data() as Map<String, dynamic>;
+      String? middleGoalId = longData['middle_goal_id'];
+      String? shortGoalId = longData['short_goal_id'];
+
+      final CollectionReference goalArchive =
+          UserFirestore.users.doc(myUid).collection('goal_archives');
+
+      await goalArchive.doc(longSnapshot.id).set({
+        'account_id': longData['account_id'],
+        'created_time': longData['created_time'],
+        'goal': longData['goal'],
+        'long_goal_id': longData['long_goal_id'],
+        'method': longData['method'],
+        'middle_goal_id': longData['middle_goal_id'],
+        'period': longData['period'],
+        'period_details': longData['period_details'],
+        'short_goal_id': longData['short_goal_id'],
+        'target_num': longData['target_num'],
+        'unit': longData['unit']
+      });
+
+      if (middleGoalId != null) {
+        DocumentSnapshot middleSnapshot = await myActiveGoal
+            .doc(longGoalId)
+            .collection('middle_goal')
+            .doc(middleGoalId)
+            .get();
+
+        Map<String, dynamic> middleData =
+            middleSnapshot.data() as Map<String, dynamic>;
+
+        await goalArchive
+            .doc(longSnapshot.id)
+            .collection('middle_goal')
+            .doc(middleGoalId)
+            .set({
+          'account_id': middleData['account_id'],
+          'created_time': middleData['created_time'],
+          'goal': middleData['goal'],
+          'long_goal_id': middleData['long_goal_id'],
+          'method': middleData['method'],
+          'middle_goal_id': middleData['middle_goal_id'],
+          'period': middleData['period'],
+          'period_details': middleData['period_details'],
+          'short_goal_id': middleData['short_goal_id'],
+          'target_num': middleData['target_num'],
+          'unit': middleData['unit']
+        });
+
+        if (shortGoalId != null) {
+          DocumentSnapshot shortSnapshot = await myActiveGoal
+              .doc(longGoalId)
+              .collection('middle_goal')
+              .doc(middleGoalId)
+              .collection('short_goal')
+              .doc(shortGoalId)
+              .get();
+
+          Map<String, dynamic> shortData =
+              shortSnapshot.data() as Map<String, dynamic>;
+
+          await goalArchive
+              .doc(longSnapshot.id)
+              .collection('middle_goal')
+              .doc(middleGoalId)
+              .collection('short_goal')
+              .doc(shortGoalId)
+              .set({
+            'account_id': shortData['account_id'],
+            'created_time': shortData['created_time'],
+            'goal': shortData['goal'],
+            'long_goal_id': shortData['long_goal_id'],
+            'method': shortData['method'],
+            'middle_goal_id': shortData['middle_goal_id'],
+            'period': shortData['period'],
+            'period_details': shortData['period_details'],
+            'short_goal_id': shortData['short_goal_id'],
+            'target_num': shortData['target_num'],
+            'unit': shortData['unit']
+          });
+
+          await myActiveGoal
+              .doc(longGoalId)
+              .collection('middle_goal')
+              .doc(middleGoalId)
+              .collection('short_goal')
+              .doc(shortGoalId)
+              .delete();
+        }
+        await myActiveGoal
+            .doc(longGoalId)
+            .collection('middle_goal')
+            .doc(middleGoalId)
+            .delete();
+      }
+
+      await myActiveGoal.doc(longGoalId).delete();
+
+      return true;
+    } catch (e) {
+      // ignore: avoid_print
+      print('アーカイブ移動エラー: $e');
+      return false;
+    }
+  }
+
+  static Future<dynamic> updateGoal(
+      String longGoalId, String myUid, String period, Goal updateGoal) async {
+    try {
+      CollectionReference myActiveGoals =
+          UserFirestore.users.doc(myUid).collection('my_active_goals');
+
+      DocumentSnapshot longSnapshot = await myActiveGoals.doc(longGoalId).get();
+      Map<String, dynamic> data = longSnapshot.data() as Map<String, dynamic>;
+
+      String? middleGoalId = data['middle_goal_id'];
+      String? shortGoalId = data['short_goal_id'];
+
+      if (period == 'long') {
+        await myActiveGoals.doc(longGoalId).update({
+          'goal': updateGoal.goal,
+          'method': updateGoal.method,
+          'target_num': updateGoal.targetnum,
+          'unit': updateGoal.unit,
+          'period_details': updateGoal.periodDetails,
+          'updated_time': Timestamp.now()
+        });
+      } else if (period == 'middle') {
+        await myActiveGoals
+            .doc(longGoalId)
+            .collection('middle_goal')
+            .doc(middleGoalId)
+            .update({
+          'goal': updateGoal.goal,
+          'method': updateGoal.method,
+          'target_num': updateGoal.targetnum,
+          'unit': updateGoal.unit,
+          'period_details': updateGoal.periodDetails,
+          'updated_time': Timestamp.now()
+        });
+      } else {
+        await myActiveGoals
+            .doc(longGoalId)
+            .collection('middle_goal')
+            .doc(middleGoalId)
+            .collection('short_goal')
+            .doc(shortGoalId)
+            .update({
+          'goal': updateGoal.goal,
+          'method': updateGoal.method,
+          'target_num': updateGoal.targetnum,
+          'unit': updateGoal.unit,
+          'period_details': updateGoal.periodDetails,
+          'updated_time': Timestamp.now()
+        });
+      }
+
+      // ignore: avoid_print
+      print('ゴール更新完了');
+      return true;
+    } catch (e) {
+      // ignore: avoid_print
+      print('ゴール更新エラー:$e');
+      return false;
+    }
+  }
 }
-  

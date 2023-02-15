@@ -3,8 +3,10 @@ import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/View/goal_edit.dart';
 import 'package:flutter_application_1/model/goal.dart';
 import 'package:flutter_application_1/utils/authentication.dart';
+import 'package:flutter_application_1/utils/firestore/goal_firestore.dart';
 import 'package:flutter_application_1/utils/firestore/user_firestore.dart';
 import 'package:flutter_application_1/utils/widget_utils.dart';
 import 'package:intl/intl.dart';
@@ -49,9 +51,23 @@ class _CalendarState extends State<CalendarEn> {
   @override
   void initState() {
     super.initState();
+    if (Authentication.myAccount != null) {
+      myUid = Authentication.myAccount!.id;
+    }
     var count = 5;
     Timer.periodic(const Duration(seconds: 1), (Timer timer) {
-      setState(() {});
+      setState(() {
+        DateTime today = DateTime.now();
+        if (longPeriodDay != null) {
+          var j = today.isAfter(longPeriodDay!);
+          if (j == true) {
+            if (longGoalId != null && myUid != null) {
+              GoalFirestore.moveGoalArchive(longGoalId!, myUid!);
+              longGoalId = null;
+            }
+          }
+        }
+      });
       if (count == 0) {
         timer.cancel();
       } else {
@@ -82,404 +98,475 @@ class _CalendarState extends State<CalendarEn> {
         appBar: AppBar(),
         drawer: WidgetUtils.createDrawerEn(
             context, longGoalId, middleGoalId, shortGoalId),
-        body: SingleChildScrollView(
-          child: Column(children: [
-            TableCalendar(
-                focusedDay: _focusedDay,
-                eventLoader: getEventForDay,
-                firstDay: DateTime.utc(2023, 1, 1),
-                lastDay: DateTime.utc(2099, 12, 31),
-                headerStyle: const HeaderStyle(
-                  formatButtonVisible: false,
-                ),
-                selectedDayPredicate: (day) {
-                  return isSameDay(_selectedDay, day);
-                },
-                onDaySelected: ((selectedDay, focusedDay) {
-                  if (!isSameDay(_selectedDay, selectedDay)) {
-                    setState(() {
-                      _selectedDay = selectedDay;
-                      _focusedDay = focusedDay;
-                    });
-                    getEventForDay(selectedDay);
-                  }
-                })),
-            ListView(
-              shrinkWrap: true,
-              children: getEventForDay(_selectedDay ?? _focusedDay)
-                  .map((event) => ListTile(
-                        title: Text(event.toString()),
-                      ))
-                  .toList(),
-            ),
-            const SizedBox(
-              height: 40,
-            ),
-            Column(
-              children: [
-                SizedBox(
-                  height: 100,
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: StreamBuilder<QuerySnapshot>(
-                            stream: UserFirestore.users
-                                .doc(myUid)
-                                .collection('my_active_goals')
-                                .snapshots(),
-                            builder: (context, snapshot) {
-                              if (snapshot.hasData) {
-                                return ListView.builder(
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
-                                    itemCount: snapshot.data!.docs.length,
-                                    itemBuilder: (context, index) {
-                                      final doc = snapshot.data!.docs[index];
-                                      final Map<String, dynamic> data =
-                                          doc.data() as Map<String, dynamic>;
-                                      final Goal longGoal = Goal(
-                                          goal: data['goal'].toString(),
-                                          period: data['period'].toString(),
-                                          periodDetails: data['period_details'],
-                                          createdTime: data['created_time'],
-                                          longGoalId: data['long_goal_id'],
-                                          middleGoalId: data['middle_goal_id'],
-                                          shortGoalId: data['short_goal_id']);
-                                      longGoalId = longGoal.longGoalId;
-                                      middleGoalId = longGoal.middleGoalId;
-                                      shortGoalId = longGoal.shortGoalId;
+        body: RefreshIndicator(
+          onRefresh: () async {
+            setState(() {});
+          },
+          child: SingleChildScrollView(
+            child: Column(children: [
+              TableCalendar(
+                  focusedDay: _focusedDay,
+                  eventLoader: getEventForDay,
+                  firstDay: DateTime.utc(2023, 1, 1),
+                  lastDay: DateTime.utc(2099, 12, 31),
+                  headerStyle: const HeaderStyle(
+                    formatButtonVisible: false,
+                  ),
+                  selectedDayPredicate: (day) {
+                    return isSameDay(_selectedDay, day);
+                  },
+                  onDaySelected: ((selectedDay, focusedDay) {
+                    if (!isSameDay(_selectedDay, selectedDay)) {
+                      setState(() {
+                        _selectedDay = selectedDay;
+                        _focusedDay = focusedDay;
+                      });
+                      getEventForDay(selectedDay);
+                    }
+                  })),
+              ListView(
+                shrinkWrap: true,
+                children: getEventForDay(_selectedDay ?? _focusedDay)
+                    .map((event) => ListTile(
+                          title: Text(event.toString()),
+                        ))
+                    .toList(),
+              ),
+              const SizedBox(
+                height: 40,
+              ),
+              Column(
+                children: [
+                  SizedBox(
+                    height: 100,
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: StreamBuilder<QuerySnapshot>(
+                              stream: UserFirestore.users
+                                  .doc(myUid)
+                                  .collection('my_active_goals')
+                                  .snapshots(),
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData) {
+                                  return ListView.builder(
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      itemCount: snapshot.data!.docs.length,
+                                      itemBuilder: (context, index) {
+                                        final doc = snapshot.data!.docs[index];
+                                        final Map<String, dynamic> data =
+                                            doc.data() as Map<String, dynamic>;
+                                        final Goal longGoal = Goal(
+                                            goal: data['goal'].toString(),
+                                            period: data['period'].toString(),
+                                            periodDetails:
+                                                data['period_details'],
+                                            method: data['method'],
+                                            targetnum: data['target_num'],
+                                            createdTime: data['created_time'],
+                                            longGoalId: data['long_goal_id'],
+                                            middleGoalId:
+                                                data['middle_goal_id'],
+                                            shortGoalId: data['short_goal_id']);
+                                        longGoalId = longGoal.longGoalId;
+                                        middleGoalId = longGoal.middleGoalId;
+                                        shortGoalId = longGoal.shortGoalId;
 
-                                      longPeriodDay =
-                                          changeTD(longGoal.periodDetails);
+                                        longPeriodDay =
+                                            changeTD(longGoal.periodDetails);
 
-                                      if (longPeriodDay != null) {
-                                        eventList = {
-                                          longPeriodDay!:
-                                              {longGoal.goal}.toList()
-                                        };
-                                      }
-                                      return Padding(
-                                        padding: const EdgeInsets.all(12.0),
-                                        child: Container(
-                                          height: 70,
-                                          width: double.infinity,
-                                          decoration: BoxDecoration(
-                                              color: Colors.lightBlue
-                                                  .withOpacity(0.5),
-                                              borderRadius:
-                                                  BorderRadius.circular(20)),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Column(
+                                        if (longPeriodDay != null) {
+                                          eventList = {
+                                            longPeriodDay!:
+                                                {longGoal.goal}.toList()
+                                          };
+                                        }
+                                        return Padding(
+                                          padding: const EdgeInsets.all(12.0),
+                                          child: InkWell(
+                                            onTap: () {
+                                            },
+                                            onLongPress: () {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          GoalEdit(
+                                                              goal: longGoal)));
+                                            },
+                                            child: Container(
+                                              height: 70,
+                                              width: double.infinity,
+                                              decoration: BoxDecoration(
+                                                  color: Colors.lightBlue
+                                                      .withOpacity(0.5),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          20)),
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8.0),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
                                                   children: [
-                                                    const Padding(
-                                                      padding: EdgeInsets.only(
-                                                          left: 8),
-                                                      child: Text(
-                                                          'Long term goal'),
+                                                    Column(
+                                                      children: [
+                                                        const Padding(
+                                                          padding:
+                                                              EdgeInsets.only(
+                                                                  left: 8),
+                                                          child: Text(
+                                                              'Long term goal'),
+                                                        ),
+                                                        Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                      .only(
+                                                                  left: 12),
+                                                          child: Text(
+                                                            longGoal.goal,
+                                                            style: const TextStyle(
+                                                                fontSize: 20,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold),
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
-                                                    Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              left: 12),
-                                                      child: Text(
-                                                        longGoal.goal,
-                                                        style: const TextStyle(
-                                                            fontSize: 20,
+                                                    Column(
+                                                      children: [
+                                                        const Text('Deadline'),
+                                                        Text(
+                                                          DateFormat(
+                                                                  'yyyy/MM/dd')
+                                                              .format(longGoal
+                                                                  .periodDetails
+                                                                  .toDate()),
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 24,
                                                             fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      ),
+                                                                FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
                                                   ],
                                                 ),
-                                                Column(
-                                                  children: [
-                                                    const Text('Deadline'),
-                                                    Text(
-                                                      DateFormat('yyyy/MM/dd')
-                                                          .format(longGoal
-                                                              .periodDetails
-                                                              .toDate()),
-                                                      style: const TextStyle(
-                                                        fontSize: 24,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                      );
-                                    });
-                              } else {
-                                return Column(
-                                  children: const [
-                                    Expanded(
-                                        child: SizedBox(
-                                      child: Text('no goal'),
-                                    )),
-                                  ],
-                                );
-                              }
-                            }),
-                      ),
-                    ],
+                                        );
+                                      });
+                                } else {
+                                  return Column(
+                                    children: const [
+                                      Expanded(
+                                          child: SizedBox(
+                                        child: Text('no goal'),
+                                      )),
+                                    ],
+                                  );
+                                }
+                              }),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                SizedBox(
-                  height: 100,
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: StreamBuilder<QuerySnapshot>(
-                            stream: UserFirestore.users
-                                .doc(myUid)
-                                .collection('my_active_goals')
-                                .doc(longGoalId)
-                                .collection('middle_goal')
-                                .snapshots(),
-                            builder: (context, snapshot) {
-                              if (snapshot.hasData) {
-                                return ListView.builder(
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
-                                    itemCount: snapshot.data!.docs.length,
-                                    itemBuilder: (context, index) {
-                                      final doc = snapshot.data!.docs[index];
-                                      final Map<String, dynamic> data =
-                                          doc.data() as Map<String, dynamic>;
-                                      final Goal middleGoal = Goal(
-                                          goal: data['goal'].toString(),
-                                          period: data['period'].toString(),
-                                          periodDetails: data['period_details'],
-                                          createdTime: data['created_time'],
-                                          longGoalId: data['long_goal_id'],
-                                          middleGoalId: data['middle_goal_id'],
-                                          shortGoalId: data['short_goal_id']);
-                                      longGoalId = middleGoal.longGoalId;
-                                      middleGoalId = middleGoal.middleGoalId;
-                                      shortGoalId = middleGoal.shortGoalId;
+                  SizedBox(
+                    height: 100,
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: StreamBuilder<QuerySnapshot>(
+                              stream: UserFirestore.users
+                                  .doc(myUid)
+                                  .collection('my_active_goals')
+                                  .doc(longGoalId)
+                                  .collection('middle_goal')
+                                  .snapshots(),
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData) {
+                                  return ListView.builder(
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      itemCount: snapshot.data!.docs.length,
+                                      itemBuilder: (context, index) {
+                                        final doc = snapshot.data!.docs[index];
+                                        final Map<String, dynamic> data =
+                                            doc.data() as Map<String, dynamic>;
+                                        final Goal middleGoal = Goal(
+                                            goal: data['goal'].toString(),
+                                            period: data['period'].toString(),
+                                            periodDetails:
+                                                data['period_details'],
+                                            method: data['method'],
+                                            targetnum: data['target_num'],
+                                            createdTime: data['created_time'],
+                                            longGoalId: data['long_goal_id'],
+                                            middleGoalId:
+                                                data['middle_goal_id'],
+                                            shortGoalId: data['short_goal_id']);
+                                        longGoalId = middleGoal.longGoalId;
+                                        middleGoalId = middleGoal.middleGoalId;
+                                        shortGoalId = middleGoal.shortGoalId;
 
-                                      middlePeriodDay =
-                                          changeTD(middleGoal.periodDetails);
+                                        middlePeriodDay =
+                                            changeTD(middleGoal.periodDetails);
 
-                                      if (middlePeriodDay != null) {
-                                        eventList.addAll({
-                                          middlePeriodDay!:
-                                              {middleGoal.goal}.toList()
-                                        });
-                                      }
-                                      return Padding(
-                                        padding: const EdgeInsets.all(12.0),
-                                        child: Container(
-                                          height: 70,
-                                          width: double.infinity,
-                                          decoration: BoxDecoration(
-                                              color: Colors.lightGreen
-                                                  .withOpacity(0.5),
-                                              borderRadius:
-                                                  BorderRadius.circular(20)),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Column(
+                                        if (middlePeriodDay != null) {
+                                          eventList.addAll({
+                                            middlePeriodDay!:
+                                                {middleGoal.goal}.toList()
+                                          });
+                                        }
+                                        return Padding(
+                                          padding: const EdgeInsets.all(12.0),
+                                          child: InkWell(
+                                            onTap: () {},
+                                            onLongPress: () {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          GoalEdit(
+                                                              goal:
+                                                                  middleGoal)));
+                                            },
+                                            child: Container(
+                                              height: 70,
+                                              width: double.infinity,
+                                              decoration: BoxDecoration(
+                                                  color: Colors.lightGreen
+                                                      .withOpacity(0.5),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          20)),
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8.0),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
                                                   children: [
-                                                    const Padding(
-                                                      padding: EdgeInsets.only(
-                                                          left: 8),
-                                                      child: Text(
-                                                          'Middle term goal'),
+                                                    Column(
+                                                      children: [
+                                                        const Padding(
+                                                          padding:
+                                                              EdgeInsets.only(
+                                                                  left: 8),
+                                                          child: Text(
+                                                              'Middle term goal'),
+                                                        ),
+                                                        Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                      .only(
+                                                                  left: 12),
+                                                          child: Text(
+                                                            middleGoal.goal,
+                                                            style: const TextStyle(
+                                                                fontSize: 20,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold),
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
-                                                    Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              left: 12),
-                                                      child: Text(
-                                                        middleGoal.goal,
-                                                        style: const TextStyle(
-                                                            fontSize: 20,
+                                                    Column(
+                                                      children: [
+                                                        const Text('Deadline'),
+                                                        Text(
+                                                          DateFormat(
+                                                                  'yyyy/MM/dd')
+                                                              .format(middleGoal
+                                                                  .periodDetails
+                                                                  .toDate()),
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 24,
                                                             fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      ),
+                                                                FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
                                                   ],
                                                 ),
-                                                Column(
-                                                  children: [
-                                                    const Text('Deadline'),
-                                                    Text(
-                                                      DateFormat('yyyy/MM/dd')
-                                                          .format(middleGoal
-                                                              .periodDetails
-                                                              .toDate()),
-                                                      style: const TextStyle(
-                                                        fontSize: 24,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                      );
-                                    });
-                              } else {
-                                return Column(
-                                  children: const [
-                                    Expanded(
-                                        child: SizedBox(
-                                      child: Text('no goal'),
-                                    )),
-                                  ],
-                                );
-                              }
-                            }),
-                      ),
-                    ],
+                                        );
+                                      });
+                                } else {
+                                  return Column(
+                                    children: const [
+                                      Expanded(
+                                          child: SizedBox(
+                                        child: Text('no goal'),
+                                      )),
+                                    ],
+                                  );
+                                }
+                              }),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                SizedBox(
-                  height: 100,
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: StreamBuilder<QuerySnapshot>(
-                            stream: UserFirestore.users
-                                .doc(myUid)
-                                .collection('my_active_goals')
-                                .doc(longGoalId)
-                                .collection('middle_goal')
-                                .doc(middleGoalId)
-                                .collection('short_goal')
-                                .snapshots(),
-                            builder: (context, snapshot) {
-                              if (snapshot.hasData) {
-                                return ListView.builder(
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
-                                    itemCount: snapshot.data!.docs.length,
-                                    itemBuilder: (context, index) {
-                                      final doc = snapshot.data!.docs[index];
-                                      final Map<String, dynamic> data =
-                                          doc.data() as Map<String, dynamic>;
-                                      final Goal shortGoal = Goal(
-                                          goal: data['goal'].toString(),
-                                          period: data['period'].toString(),
-                                          periodDetails: data['period_details'],
-                                          createdTime: data['created_time'],
-                                          longGoalId: data['long_goal_id'],
-                                          middleGoalId: data['middle_goal_id'],
-                                          shortGoalId: data['short_goal_id']);
-                                      longGoalId = shortGoal.longGoalId;
-                                      middleGoalId = shortGoal.middleGoalId;
-                                      shortGoalId = shortGoal.shortGoalId;
+                  SizedBox(
+                    height: 100,
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: StreamBuilder<QuerySnapshot>(
+                              stream: UserFirestore.users
+                                  .doc(myUid)
+                                  .collection('my_active_goals')
+                                  .doc(longGoalId)
+                                  .collection('middle_goal')
+                                  .doc(middleGoalId)
+                                  .collection('short_goal')
+                                  .snapshots(),
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData) {
+                                  return ListView.builder(
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      itemCount: snapshot.data!.docs.length,
+                                      itemBuilder: (context, index) {
+                                        final doc = snapshot.data!.docs[index];
+                                        final Map<String, dynamic> data =
+                                            doc.data() as Map<String, dynamic>;
+                                        final Goal shortGoal = Goal(
+                                            goal: data['goal'].toString(),
+                                            period: data['period'].toString(),
+                                            periodDetails:
+                                                data['period_details'],
+                                            method: data['method'],
+                                            targetnum: data['target_num'],
+                                            createdTime: data['created_time'],
+                                            longGoalId: data['long_goal_id'],
+                                            middleGoalId:
+                                                data['middle_goal_id'],
+                                            shortGoalId: data['short_goal_id']);
+                                        longGoalId = shortGoal.longGoalId;
+                                        middleGoalId = shortGoal.middleGoalId;
+                                        shortGoalId = shortGoal.shortGoalId;
 
-                                      shortPeriodDay =
-                                          changeTD(shortGoal.periodDetails);
+                                        shortPeriodDay =
+                                            changeTD(shortGoal.periodDetails);
 
-                                      if (shortPeriodDay != null) {
-                                        eventList.addAll({
-                                          shortPeriodDay!:
-                                              {shortGoal.goal}.toList()
-                                        });
-                                      }
-                                      return Padding(
-                                        padding: const EdgeInsets.all(12.0),
-                                        child: Container(
-                                          height: 70,
-                                          width: double.infinity,
-                                          decoration: BoxDecoration(
-                                              color: Colors.yellow
-                                                  .withOpacity(0.3),
-                                              borderRadius:
-                                                  BorderRadius.circular(20)),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Column(
+                                        if (shortPeriodDay != null) {
+                                          eventList.addAll({
+                                            shortPeriodDay!:
+                                                {shortGoal.goal}.toList()
+                                          });
+                                        }
+                                        return Padding(
+                                          padding: const EdgeInsets.all(12.0),
+                                          child: InkWell(
+                                            onTap: () {},
+                                            onLongPress: () {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          GoalEdit(
+                                                              goal:
+                                                                  shortGoal)));
+                                            },
+                                            child: Container(
+                                              height: 70,
+                                              width: double.infinity,
+                                              decoration: BoxDecoration(
+                                                  color: Colors.yellow
+                                                      .withOpacity(0.3),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          20)),
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8.0),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
                                                   children: [
-                                                    const Padding(
-                                                      padding: EdgeInsets.only(
-                                                          left: 8),
-                                                      child: Text(
-                                                          'Short term goal'),
+                                                    Column(
+                                                      children: [
+                                                        const Padding(
+                                                          padding:
+                                                              EdgeInsets.only(
+                                                                  left: 8),
+                                                          child: Text(
+                                                              'Short term goal'),
+                                                        ),
+                                                        Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                      .only(
+                                                                  left: 12),
+                                                          child: Text(
+                                                            shortGoal.goal,
+                                                            style: const TextStyle(
+                                                                fontSize: 20,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold),
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
-                                                    Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              left: 12),
-                                                      child: Text(
-                                                        shortGoal.goal,
-                                                        style: const TextStyle(
-                                                            fontSize: 20,
+                                                    Column(
+                                                      children: [
+                                                        const Text('Deadline'),
+                                                        Text(
+                                                          DateFormat(
+                                                                  'yyyy/MM/dd')
+                                                              .format(shortGoal
+                                                                  .periodDetails
+                                                                  .toDate()),
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 24,
                                                             fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      ),
+                                                                FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
                                                   ],
                                                 ),
-                                                Column(
-                                                  children: [
-                                                    const Text('Deadline'),
-                                                    Text(
-                                                      DateFormat('yyyy/MM/dd')
-                                                          .format(shortGoal
-                                                              .periodDetails
-                                                              .toDate()),
-                                                      style: const TextStyle(
-                                                        fontSize: 24,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                      );
-                                    });
-                              } else {
-                                return Column(
-                                  children: const [
-                                    Expanded(
-                                        child: SizedBox(
-                                      child: Text('no goal'),
-                                    )),
-                                  ],
-                                );
-                              }
-                            }),
-                      ),
-                    ],
+                                        );
+                                      });
+                                } else {
+                                  return Column(
+                                    children: const [
+                                      Expanded(
+                                          child: SizedBox(
+                                        child: Text('no goal'),
+                                      )),
+                                    ],
+                                  );
+                                }
+                              }),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ]),
+                ],
+              ),
+            ]),
+          ),
         ),
       ),
     );

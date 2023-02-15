@@ -4,12 +4,13 @@ class Goal {
   String accountId;
   String goal;
   String method;
-  int targetnum;
+  int? targetnum;
   String unit;
   String period;
   String? longGoalId;
   String? middleGoalId;
   String? shortGoalId;
+  Timestamp? updatedTime;
   Timestamp periodDetails;
   Timestamp createdTime;
 
@@ -23,6 +24,7 @@ class Goal {
       this.longGoalId = '',
       this.middleGoalId = '',
       this.shortGoalId = '',
+      this.updatedTime,
       required this.periodDetails,
       required this.createdTime});
 }

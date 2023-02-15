@@ -826,6 +826,7 @@ class _MakeGoalState extends State<MakeGoal> {
                         accountId: Authentication.myAccount!.id,
                         goal: longGoalController.text,
                         method: longmethod!,
+                        targetnum: null,
                         periodDetails: Timestamp.fromDate(longDateTime),
                         createdTime: Timestamp.now());
                     var result1 = await GoalFirestore.addLongGoal(newLongGoal);
@@ -836,6 +837,7 @@ class _MakeGoalState extends State<MakeGoal> {
                             accountId: myUid!,
                             goal: middleGoalController.text,
                             method: middlemethod!,
+                            targetnum: null,
                             periodDetails: Timestamp.fromDate(middleDateTime),
                             createdTime: Timestamp.now());
                         var result2 = await GoalFirestore.addMiddleGoal(
@@ -847,6 +849,7 @@ class _MakeGoalState extends State<MakeGoal> {
                                 accountId: myUid!,
                                 goal: shortGoalController.text,
                                 method: shortmethod!,
+                                targetnum: null,
                                 periodDetails:
                                     Timestamp.fromDate(shortDateTime),
                                 createdTime: Timestamp.now());
