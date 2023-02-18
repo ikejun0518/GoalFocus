@@ -3,6 +3,7 @@ import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/View/goal_detail.dart';
 import 'package:flutter_application_1/View/goal_edit.dart';
 import 'package:flutter_application_1/model/goal.dart';
 import 'package:flutter_application_1/utils/authentication.dart';
@@ -186,6 +187,12 @@ class _CalendarState extends State<CalendarEn> {
                                           padding: const EdgeInsets.all(12.0),
                                           child: InkWell(
                                             onTap: () {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          GoalDetail(
+                                                              goal: longGoal)));
                                             },
                                             onLongPress: () {
                                               Navigator.push(
@@ -327,7 +334,14 @@ class _CalendarState extends State<CalendarEn> {
                                         return Padding(
                                           padding: const EdgeInsets.all(12.0),
                                           child: InkWell(
-                                            onTap: () {},
+                                            onTap: () {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          GoalDetail(
+                                                              goal: middleGoal)));
+                                            },
                                             onLongPress: () {
                                               Navigator.push(
                                                   context,
@@ -471,7 +485,14 @@ class _CalendarState extends State<CalendarEn> {
                                         return Padding(
                                           padding: const EdgeInsets.all(12.0),
                                           child: InkWell(
-                                            onTap: () {},
+                                            onTap: () {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          GoalDetail(
+                                                              goal: shortGoal)));
+                                            },
                                             onLongPress: () {
                                               Navigator.push(
                                                   context,

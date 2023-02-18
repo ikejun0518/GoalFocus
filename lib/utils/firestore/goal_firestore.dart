@@ -9,6 +9,24 @@ class GoalFirestore {
   static final CollectionReference goals =
       _firestoreInstance.collection('goals');
 
+  static Future<List> getGoalIdToL(String myUid, String longGoalId) async {
+    List goalIdList = [];
+    CollectionReference myActiveGoals =
+        UserFirestore.users.doc(myUid).collection('my_active_goals');
+
+    DocumentSnapshot longSnapshot = await myActiveGoals.doc(longGoalId).get();
+    Map<String, dynamic> data = longSnapshot.data() as Map<String, dynamic>;
+
+    String? middleGoalId = data['middle_goal_id'];
+    String? shortGoalId = data['short_goal_id'];
+
+    goalIdList.add(longGoalId);
+    goalIdList.add(middleGoalId);
+    goalIdList.add(shortGoalId);
+
+    return goalIdList;
+  }
+
   static Future<String?> addLongGoal(Goal newLongGoal) async {
     try {
       final CollectionReference userGoals = _firestoreInstance
@@ -132,7 +150,7 @@ class GoalFirestore {
         'method': newShortGoal.method,
         'target_num': newShortGoal.targetnum,
         'unit': newShortGoal.unit,
-        'period': newShortGoal.period,
+        'period': 'short',
         'period_details': newShortGoal.periodDetails,
         'created_time': Timestamp.now()
       });
@@ -359,6 +377,155 @@ class GoalFirestore {
     } catch (e) {
       // ignore: avoid_print
       print('ゴール更新エラー:$e');
+      return false;
+    }
+  }
+
+  static Future<dynamic> recordProgress(int record, String myUid,
+      String longGoalId, String period, String method, bool check) async {
+    try {
+      List goalIds = await getGoalIdToL(myUid, longGoalId);
+      String? middleGoalId = goalIds[1];
+      String? shortGoalId = goalIds[2];
+      int? longnum;
+      int? middlenum;
+      int? shortnum;
+
+      //長期の前日の数値を取得
+      CollectionReference longRecord = UserFirestore.users
+          .doc(myUid)
+          .collection('my_active_goals')
+          .doc(longGoalId)
+          .collection('long_record');
+
+      QuerySnapshot longRecordSnapshot = await longRecord
+          .orderBy('recorded_time', descending: true)
+          .limit(1)
+          .get();
+      String? longRecordId = longRecordSnapshot.docs[0].id;
+
+      DocumentSnapshot longSnapshot = await longRecord.doc(longRecordId).get();
+      Map<String, dynamic> longdata =
+          longSnapshot.data() as Map<String, dynamic>;
+
+      if (longdata == null) {
+        longnum = 0;
+      } else {
+        longnum = longdata['progress'];
+      }
+
+      //中期の前日の数値を取得
+      CollectionReference middleRecord = UserFirestore.users
+          .doc(myUid)
+          .collection('my_active_goals')
+          .doc(longGoalId)
+          .collection('middle_goal')
+          .doc(middleGoalId)
+          .collection('middle_record');
+
+      QuerySnapshot middleRecordSnapshot = await middleRecord
+          .orderBy('recorded_time', descending: true)
+          .limit(1)
+          .get();
+      String? middleRecordId = middleRecordSnapshot.docs[0].id;
+
+      DocumentSnapshot middleSnapshot =
+          await middleRecord.doc(middleRecordId).get();
+      Map<String, dynamic> middledata =
+          middleSnapshot.data() as Map<String, dynamic>;
+
+      if (middledata == null) {
+        middlenum = 0;
+      } else {
+        middlenum = middledata['progress'];
+      }
+
+      //短期の前日の数値を取得
+      CollectionReference shortRecord = UserFirestore.users
+          .doc(myUid)
+          .collection('my_active_goals')
+          .doc(longGoalId)
+          .collection('middle_goal')
+          .doc(middleGoalId)
+          .collection('short_goal')
+          .doc(shortGoalId)
+          .collection('short_record');
+
+      QuerySnapshot shortRecordSnapshot = await shortRecord
+          .orderBy('recorded_time', descending: true)
+          .limit(1)
+          .get();
+
+      String? shortRecordId = shortRecordSnapshot.docs[0].id;
+
+      DocumentSnapshot shortSnapshot =
+          await shortRecord.doc(shortRecordId).get();
+
+      Map<String, dynamic> shortdata =
+          shortSnapshot.data() as Map<String, dynamic>;
+
+      if (shortdata == null) {
+        shortnum = 0;
+      } else {
+        shortnum = shortdata['progress']; 
+      }
+
+      if (method == 'num') {
+        if (period == 'long') {
+          await longRecord
+              .add({'record': record, 'recorded_time': Timestamp.now()});
+        } else if (period == 'middle') {
+          await middleRecord
+              .add({'record': record, 'recorded_time': Timestamp.now()});
+        } else {
+          await shortRecord
+              .add({'record': record, 'recorded_time': Timestamp.now()});
+        }
+      } else {
+        if (period == 'long') {
+          if (check == true) {
+            await longRecord
+                .add({'progress': record, 'recorded_time': Timestamp.now()});
+            await middleRecord.add(
+                {'progress': record * 2, 'recorded_time': Timestamp.now()});
+            await shortRecord.add(
+                {'progress': record * 4, 'recorded_time': Timestamp.now()});
+          } else {
+            await longRecord
+                .add({'progress': record, 'recorded_time': Timestamp.now()});
+          }
+        } else if (period == 'middle') {
+          if (check == true) {
+            await longRecord.add(
+                {'progress': record / 2, 'recorded_time': Timestamp.now()});
+            await middleRecord
+                .add({'progress': record, 'recorded_time': Timestamp.now()});
+            await shortRecord.add(
+                {'progress': record * 2, 'recorded_time': Timestamp.now()});
+          } else {
+            await middleRecord
+                .add({'progress': record, 'recorded_time': Timestamp.now()});
+          }
+        } else {
+          if (check == true) {
+            await longRecord.add(
+                {'progress': record / 4, 'recorded_time': Timestamp.now()});
+            await middleRecord.add(
+                {'progress': record / 2, 'recorded_time': Timestamp.now()});
+            await shortRecord
+                .add({'progress': record, 'recorded_time': Timestamp.now()});
+          } else {
+            await shortRecord
+                .add({'progress': record, 'recorded_time': Timestamp.now()});
+          }
+        }
+      }
+      // ignore: avoid_print
+      print('記録完了');
+      return true;
+    } catch (e) {
+      // ignore: avoid_print
+      print('記録エラー :$e');
       return false;
     }
   }
